@@ -114,6 +114,16 @@
     color: #888;
     margin-top: 6px;
   }
+  .note-box {
+    background: #33363c;
+    border-left: 3px solid #f0b429;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #d8c896;
+    line-height: 1.6;
+    margin: 10px 0 14px;
+  }
   footer {
     margin-top: 24px;
     text-align: center;
@@ -143,16 +153,20 @@
       <option value="cn-tw">簡體 → 繁體(台灣用字,僅字符)</option>
       <option value="cn-t">簡體 → 繁體(通用,僅字符)</option>
     </select>
-    <div class="hint">「慣用詞感知」會自動把 视频→影片、硬盘→硬碟、软件→軟體 等常見詞一併修正,比純字符轉換更準確。</div>
+    <div class="hint">「慣用詞感知」模式已內建常見詞庫,會自動把 视频→影片、硬盘→硬碟、软件→軟體 等大量常見詞一併修正,通常不需要額外處理。</div>
   </div>
 
-  <h3>② 自訂詞彙對照表(精準二次修正)</h3>
-  <div class="glossary-format">格式:每行一組,原詞=替換詞(可以是簡體字或轉換後仍殘留的詞)</div>
+  <h3>② 自訂詞彙對照表(補漏 / 精準修正)</h3>
+  <div class="note-box">
+    💡 <b>建議使用方式:</b>此欄位<b>不是必填</b>。建議先「不填」直接完成第③步轉換,下載後檢查書籍內容 —— 如果發現有殘留的簡體字或不習慣的用語,再回來這裡輸入該詞,重新轉換一次即可。<br><br>
+    因為基本模式已能處理絕大多數常見詞,若這裡填入的詞恰好都已被自動轉換,轉換結果會顯示「套用 0 組」,這是正常現象,代表這些詞已經被基本模式提前處理好了。
+  </div>
+  <div class="glossary-format">格式:每行一組,原詞=替換詞(填入你發現「殘留未轉」的詞)</div>
   <div class="row">
-    <textarea id="glossary" spellcheck="false"></textarea>
+    <textarea id="glossary" spellcheck="false" placeholder="例如:&#10;躺平=躺平&#10;内卷=內捲"></textarea>
     <div class="counter" id="glossaryCount">0 組詞彙</div>
   </div>
-  <button class="btn-secondary" id="loadPreset">載入常見詞彙範例</button>
+  <button class="btn-secondary" id="loadPreset">載入範例詞彙(僅供參考格式・88組)</button>
   <button class="btn-secondary" id="clearGlossary">清空詞彙表</button>
 
   <h3>③ 開始轉換</h3>
