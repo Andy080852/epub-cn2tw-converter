@@ -37,6 +37,22 @@
     margin: 22px 0 8px;
     border-top: 1px solid #3d3f44;
     padding-top: 16px;
+    display: flex;
+    align-items: center;
+  }
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #3a6df0;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    margin-right: 8px;
+    flex-shrink: 0;
   }
   .row { margin: 14px 0; }
   label {
@@ -45,9 +61,26 @@
     font-size: 14px;
     color: #b5b5b5;
   }
-  input[type="file"] {
-    width: 100%;
-    color: #e6e6e6;
+  .dropzone {
+    border: 2px dashed #444;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.15s;
+    font-size: 13px;
+    color: #999;
+  }
+  .dropzone:hover { border-color: #5a5d63; }
+  .dropzone.dragover {
+    border-color: #4f8cff;
+    background: rgba(79,140,255,0.08);
+    color: #cfe0ff;
+  }
+  .dropzone.has-file {
+    border-color: #3a6df0;
+    color: #cfe0ff;
+    border-style: solid;
   }
   select, button, textarea {
     width: 100%;
@@ -59,6 +92,15 @@
     font-size: 14px;
     box-sizing: border-box;
     font-family: inherit;
+  }
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 34px;
+    cursor: pointer;
   }
   textarea {
     min-height: 140px;
@@ -74,9 +116,13 @@
   }
   button:hover { opacity: 0.9; }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
   .btn-secondary {
     background: #3a3d42;
-    margin-top: 8px;
     font-weight: normal;
     font-size: 12px;
     padding: 8px;
@@ -87,7 +133,21 @@
     font-size: 13px;
     color: #8fd19e;
     white-space: pre-line;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
+  .spinner {
+    width: 13px;
+    height: 13px;
+    border: 2px solid #3d4a3f;
+    border-top-color: #8fd19e;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   #downloadArea { margin-top: 14px; }
   #downloadArea a {
     display: inline-block;
@@ -97,6 +157,11 @@
     border-radius: 8px;
     text-decoration: none;
     font-size: 14px;
+    animation: fadeIn 0.35s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   .hint {
     font-size: 12px;
@@ -131,48 +196,59 @@
     color: #666;
   }
   footer a { color: #7aa5ff; text-decoration: none; }
+
+  @media (max-width: 480px) {
+    .card { padding: 22px 20px; }
+  }
 </style>
 </head>
 <body>
 
 <div class="card">
   <h2>📚 EPUB 簡轉繁工具</h2>
-  <div class="hint">兩段式轉換:先用慣用詞感知模式自動轉換,再套用你的自訂詞彙表做精準修正。所有處理都在本機瀏覽器完成,不會上傳檔案。</div>
+  <div class="hint">兩段式轉換:先用慣用詞模式自動轉換,再套用你的自訂詞彙表做精準修正。所有處理都在本機瀏覽器完成,不會上傳檔案。</div>
 
-  <h3>① 選擇檔案與基本模式</h3>
+  <h3><span class="step-badge">1</span>選擇檔案與基本模式</h3>
   <div class="row">
-    <label>選擇 EPUB 檔案</label>
-    <input type="file" id="fileInput" accept=".epub">
+    <div class="dropzone" id="dropzone">
+      <div id="dropzoneText">點擊或拖曳 EPUB 檔案到這裡</div>
+    </div>
+    <input type="file" id="fileInput" accept=".epub" hidden>
   </div>
 
   <div class="row">
     <label>基本轉換模式</label>
     <select id="mode">
       <option value="cn-twp" selected>簡體 → 繁體(台灣用字+慣用詞,推薦)</option>
+      <option value="cn-hkp">簡體 → 繁體(香港用字+慣用詞)</option>
       <option value="cn-hk">簡體 → 繁體(香港用字,僅字符)</option>
       <option value="cn-tw">簡體 → 繁體(台灣用字,僅字符)</option>
       <option value="cn-t">簡體 → 繁體(通用,僅字符)</option>
     </select>
-    <div class="hint">「慣用詞感知」模式已內建常見詞庫,會自動把 视频→影片、硬盘→硬碟、软件→軟體 等大量常見詞一併修正,通常不需要額外處理。</div>
+    <div class="hint" id="modeHint">「慣用詞」模式已內建常見詞庫,會自動把 视频→影片、硬盘→硬碟、软件→軟體 等大量常見詞一併修正,通常不需要額外處理。</div>
   </div>
 
-  <h3>② 自訂詞彙對照表(補漏 / 精準修正)</h3>
+  <h3><span class="step-badge">2</span>自訂詞彙對照表(補漏 / 精準修正)</h3>
   <div class="note-box">
-    💡 <b>建議使用方式:</b>此欄位<b>不是必填</b>。建議先「不填」直接完成第③步轉換,下載後檢查書籍內容 —— 如果發現有殘留的簡體字或不習慣的用語,再回來這裡輸入該詞,重新轉換一次即可。<br><br>
-    因為基本模式已能處理絕大多數常見詞,若這裡填入的詞恰好都已被自動轉換,轉換結果會顯示「套用 0 組」,這是正常現象,代表這些詞已經被基本模式提前處理好了。
+    💡 這欄位不是必填。建議先不填直接轉換,下載後檢查內容,有殘留簡體字或用語不順再回來補上,重新轉換一次即可。顯示「套用 0 組」是正常的,代表那些詞已經被基本模式處理掉了。
   </div>
   <div class="glossary-format">格式:每行一組,原詞=替換詞(填入你發現「殘留未轉」的詞)</div>
   <div class="row">
-    <textarea id="glossary" spellcheck="false" placeholder="例如:&#10;躺平=躺平&#10;内卷=內捲"></textarea>
+    <textarea id="glossary" spellcheck="false" placeholder="例如:&#10;视频=影片&#10;硬盘=硬碟"></textarea>
     <div class="counter" id="glossaryCount">0 組詞彙</div>
   </div>
-  <button class="btn-secondary" id="loadPreset">載入範例詞彙(僅供參考格式・88組)</button>
-  <button class="btn-secondary" id="clearGlossary">清空詞彙表</button>
+  <div class="btn-row">
+    <button class="btn-secondary" id="loadPreset">載入範例詞彙</button>
+    <button class="btn-secondary" id="clearGlossary">清空詞彙表</button>
+  </div>
 
-  <h3>③ 開始轉換</h3>
+  <h3><span class="step-badge">3</span>開始轉換</h3>
   <button id="convertBtn">開始兩段式轉換</button>
 
-  <div id="status"></div>
+  <div id="status">
+    <span class="spinner" id="spinner"></span>
+    <span id="statusText"></span>
+  </div>
   <div id="downloadArea"></div>
 
   <footer>EPUB CN2TW Converter · 100% 本機處理,不上傳檔案</footer>
@@ -180,10 +256,15 @@
 
 <script>
   const fileInput = document.getElementById('fileInput');
+  const dropzone = document.getElementById('dropzone');
+  const dropzoneText = document.getElementById('dropzoneText');
   const convertBtn = document.getElementById('convertBtn');
   const statusEl = document.getElementById('status');
+  const statusTextEl = document.getElementById('statusText');
+  const spinnerEl = document.getElementById('spinner');
   const downloadArea = document.getElementById('downloadArea');
   const modeSelect = document.getElementById('mode');
+  const modeHint = document.getElementById('modeHint');
   const glossaryEl = document.getElementById('glossary');
   const glossaryCount = document.getElementById('glossaryCount');
   const loadPresetBtn = document.getElementById('loadPreset');
@@ -191,10 +272,65 @@
 
   const modeMap = {
     'cn-twp': { from: 'cn', to: 'twp' },
+    'cn-hkp': { from: 'cn', to: 'hkp' },
     'cn-hk':  { from: 'cn', to: 'hk'  },
     'cn-tw':  { from: 'cn', to: 'tw'  },
     'cn-t':   { from: 'cn', to: 't'   },
   };
+
+  const modeHints = {
+    'cn-twp': '「慣用詞」模式已內建常見詞庫,會自動把 视频→影片、硬盘→硬碟、软件→軟體 等大量常見詞一併修正,通常不需要額外處理。',
+    'cn-hkp': '香港慣用詞詞庫目前仍在持續擴充中,覆蓋量不如台灣版完整,轉換後建議多檢查殘留用語,搭配下方詞彙表補漏。',
+    'cn-hk':  '只轉換字形為香港標準繁體字,不處理大陸用語詞彙,视频不會變成影片。',
+    'cn-tw':  '只轉換字形為台灣標準繁體字,不處理大陸用語詞彙,视频不會變成影片。',
+    'cn-t':   '只轉換為通用繁體字形,不特別偏向台灣或香港標準,也不處理詞彙。',
+  };
+
+  modeSelect.addEventListener('change', () => {
+    modeHint.textContent = modeHints[modeSelect.value] || '';
+  });
+
+  function formatSize(bytes) {
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function setSelectedFile(file) {
+    if (!file) return;
+    dropzone.classList.add('has-file');
+    dropzoneText.textContent = `📄 ${file.name} (${formatSize(file.size)})`;
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', () => {
+    setSelectedFile(fileInput.files[0]);
+  });
+
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+  });
+
+  ['dragleave', 'dragend'].forEach(evt => {
+    dropzone.addEventListener(evt, () => {
+      dropzone.classList.remove('dragover');
+    });
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.toLowerCase().endsWith('.epub')) {
+      fileInput.files = e.dataTransfer.files;
+      setSelectedFile(file);
+    } else {
+      statusTextEl.textContent = '⚠️ 請拖曳 .epub 檔案';
+    }
+  });
 
   const presetGlossary = [
     '# 科技 / 電腦',
@@ -331,10 +467,15 @@
     return result;
   }
 
+  function setStatus(text, loading) {
+    statusTextEl.textContent = text;
+    spinnerEl.style.display = loading ? 'inline-block' : 'none';
+  }
+
   convertBtn.addEventListener('click', async () => {
     const file = fileInput.files[0];
     if (!file) {
-      statusEl.textContent = '⚠️ 請先選擇 EPUB 檔案';
+      setStatus('⚠️ 請先選擇 EPUB 檔案', false);
       return;
     }
 
@@ -342,7 +483,7 @@
     downloadArea.innerHTML = '';
 
     try {
-      statusEl.textContent = '⏳ 正在讀取 EPUB...';
+      setStatus('正在讀取 EPUB...', true);
       const arrayBuffer = await file.arrayBuffer();
       const zip = await JSZip.loadAsync(arrayBuffer);
 
@@ -354,7 +495,7 @@
       const fileNames = Object.keys(zip.files);
       let processed = 0;
 
-      statusEl.textContent = `⏳ 第一段:套用慣用詞感知轉換...`;
+      setStatus('第一段:套用慣用詞轉換...', true);
 
       for (const name of fileNames) {
         const entry = zip.files[name];
@@ -378,9 +519,12 @@
         }
       }
 
-      statusEl.textContent = glossaryPairs.length > 0
-        ? `⏳ 第二段:已套用 ${glossaryPairs.length} 組自訂詞彙,正在打包...`
-        : `⏳ 正在打包 EPUB...`;
+      setStatus(
+        glossaryPairs.length > 0
+          ? `第二段:已套用 ${glossaryPairs.length} 組自訂詞彙,正在打包...`
+          : '正在打包 EPUB...',
+        true
+      );
 
       const outZip = new JSZip();
       if (zip.files['mimetype']) {
@@ -405,11 +549,11 @@
       const newName = `${originalName}_繁中版.epub`;
 
       downloadArea.innerHTML = `<a href="${url}" download="${newName}">⬇️ 下載轉換後的 EPUB</a>`;
-      statusEl.textContent = `✅ 轉換完成!處理了 ${processed} 個檔案,套用了 ${glossaryPairs.length} 組自訂詞彙。`;
+      setStatus(`✅ 轉換完成!處理了 ${processed} 個檔案,套用了 ${glossaryPairs.length} 組自訂詞彙。`, false);
 
     } catch (err) {
       console.error(err);
-      statusEl.textContent = '❌ 轉換失敗:' + err.message;
+      setStatus('❌ 轉換失敗:' + err.message, false);
     } finally {
       convertBtn.disabled = false;
     }
