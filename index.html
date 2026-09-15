@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>EPUB 簡轉繁工具・進階版</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
+<style>
+  body {
+    font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+    background: #1e1f22;
+    color: #e6e6e6;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 30px 12px;
+  }
+  .card {
+    background: #2b2d31;
+    padding: 32px 36px;
+    border-radius: 16px;
+    width: 520px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  h2 {
+    margin-top: 0;
+    color: #ffffff;
+    font-size: 20px;
+  }
+  h3 {
+    color: #9fc7ff;
+    font-size: 14px;
+    margin: 22px 0 8px;
+    border-top: 1px solid #3d3f44;
+    padding-top: 16px;
+  }
+  .row { margin: 14px 0; }
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #b5b5b5;
+  }
+  input[type="file"] {
+    width: 100%;
+    color: #e6e6e6;
+  }
+  select, button, textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: #1e1f22;
+    color: #e6e6e6;
+    font-size: 14px;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  textarea {
+    min-height: 140px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  button {
+    background: linear-gradient(90deg,#4f8cff,#3a6df0);
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+  }
+  button:hover { opacity: 0.9; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    background: #3a3d42;
+    margin-top: 8px;
+    font-weight: normal;
+    font-size: 12px;
+    padding: 8px;
+  }
+  #convertBtn { margin-top: 6px; }
+  #status {
+    margin-top: 14px;
+    font-size: 13px;
+    color: #8fd19e;
+    white-space: pre-line;
+  }
+  #downloadArea { margin-top: 14px; }
+  #downloadArea a {
+    display: inline-block;
+    background: #3a6df0;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .hint {
+    font-size: 12px;
+    color: #888;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .glossary-format {
+    font-size: 12px;
+    color: #7aa5ff;
+    margin-bottom: 6px;
+  }
+  .counter {
+    font-size: 12px;
+    color: #888;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>📚 EPUB 簡轉繁工具</h2>
+  <div class="hint">兩段式轉換:先用慣用詞感知模式自動轉換,再套用你的自訂詞彙表做精準修正。所有處理都在本機瀏覽器完成,不會上傳檔案。</div>
+
+  <h3>① 選擇檔案與基本模式</h3>
+  <div class="row">
+    <label>選擇 EPUB 檔案</label>
+    <input type="file" id="fileInput" accept=".epub">
+  </div>
+
+  <div class="row">
+    <label>基本轉換模式</label>
+    <select id="mode">
+      <option value="cn-twp" selected>簡體 → 繁體(台灣用字+慣用詞,推薦)</option>
+      <option value="cn-hk">簡體 → 繁體(香港用字,僅字符)</option>
+      <option value="cn-tw">簡體 → 繁體(台灣用字,僅字符)</option>
+      <option value="cn-t">簡體 → 繁體(通用,僅字符)</option>
+    </select>
+    <div class="hint">「慣用詞感知」會自動把 视频→影片、硬盘→硬碟、软件→軟體 等常見詞一併修正,比純字符轉換更準確。</div>
+  </div>
+
+  <h3>② 自訂詞彙對照表(精準二次修正)</h3>
+  <div class="glossary-format">格式:每行一組,原詞=替換詞(可以是簡體字或轉換後仍殘留的詞)</div>
+  <div class="row">
+    <textarea id="glossary" spellcheck="false"></textarea>
+    <div class="counter" id="glossaryCount">0 組詞彙</div>
+  </div>
+  <button class="btn-secondary" id="loadPreset">載入常見詞彙範例</button>
+  <button class="btn-secondary" id="clearGlossary">清空詞彙表</button>
+
+  <h3>③ 開始轉換</h3>
+  <button id="convertBtn">開始兩段式轉換</button>
+
+  <div id="status"></div>
+  <div id="downloadArea"></div>
+</div>
+
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const convertBtn = document.getElementById('convertBtn');
+  const statusEl = document.getElementById('status');
+  const downloadArea = document.getElementById('downloadArea');
+  const modeSelect = document.getElementById('mode');
+  const glossaryEl = document.getElementById('glossary');
+  const glossaryCount = document.getElementById('glossaryCount');
+  const loadPresetBtn = document.getElementById('loadPreset');
+  const clearGlossaryBtn = document.getElementById('clearGlossary');
+
+  const modeMap = {
+    'cn-twp': { from: 'cn', to: 'twp' },
+    'cn-hk':  { from: 'cn', to: 'hk'  },
+    'cn-tw':  { from: 'cn', to: 'tw'  },
+    'cn-t':   { from: 'cn', to: 't'   },
+  };
+
+  const presetGlossary = [
+    '# 科技 / 電腦',
+    '视频=影片',
+    '硬盘=硬碟',
+    '打印机=印表機',
+    '鼠标=滑鼠',
+    '软件=軟體',
+    '内存=記憶體',
+    '光标=游標',
+    '默认=預設',
+    '文件=檔案',
+    '信息=資訊',
+    '网络=網路',
+    '在线=線上',
+    '激活=啟用',
+    '数据=資料',
+    '服务器=伺服器',
+    '账户=帳戶',
+    '密码=密碼',
+    '界面=介面',
+    '显示器=顯示器',
+    '摄像头=攝影機',
+    '充电器=充電器',
+    '电池=電池',
+    '蓝牙=藍牙',
+    '搜索=搜尋',
+    '下载=下載',
+    '上传=上傳',
+    '',
+    '# 飲食 / 生活',
+    '土豆=馬鈴薯',
+    '西红柿=番茄',
+    '花生米=花生',
+    '方便面=泡麵',
+    '矿泉水=礦泉水',
+    '快递=快遞',
+    '外卖=外送',
+    '打车=叫車',
+    '公交=公車',
+    '地铁=地鐵',
+    '出租车=計程車',
+    '洗手间=洗手間',
+    '拖鞋=拖鞋',
+    '毛巾=毛巾',
+    '',
+    '# 網路用語 / 口語',
+    '忽悠=哄騙',
+    '奇葩=怪咖',
+    '牛逼=厲害',
+    '接地气=貼近生活',
+    '给力=給力(厲害)',
+    '窝心=貼心',
+    '搞定=辦妥',
+    '点赞=按讚',
+    '吐槽=抱怨',
+    '靠谱=可靠',
+    '怼=頂',
+    '社死=社會性死亡',
+    '躺平=躺平',
+    '内卷=內捲',
+    '摆烂=擺爛',
+    '',
+    '# 影視 / 娛樂',
+    '直播=直播',
+    '弹幕=彈幕',
+    '主播=主播',
+    '网红=網紅',
+    '粉丝=粉絲',
+    '偶像=偶像',
+    '综艺=綜藝',
+    '剪辑=剪輯',
+    '配音=配音',
+    '特效=特效',
+    '片头=片頭',
+    '片尾=片尾',
+    '剧本=劇本',
+    '导演=導演',
+    '',
+    '# 職場 / 商業',
+    '经理=經理',
+    '方案=方案',
+    '反馈=回饋',
+    '沟通=溝通',
+    '协调=協調',
+    '汇报=匯報',
+    '绩效=績效',
+    '福利=福利',
+    '入职=到職',
+    '离职=離職',
+    '面试=面試',
+    '简历=履歷',
+    '薪水=薪水',
+    '奖金=獎金'
+  ].join('\n');
+
+  function updateGlossaryCount() {
+    const lines = glossaryEl.value.split('\n').map(l => l.trim()).filter(l => l.includes('=') && !l.startsWith('#'));
+    glossaryCount.textContent = `${lines.length} 組詞彙`;
+  }
+
+  glossaryEl.addEventListener('input', updateGlossaryCount);
+
+  loadPresetBtn.addEventListener('click', () => {
+    glossaryEl.value = presetGlossary;
+    updateGlossaryCount();
+  });
+
+  clearGlossaryBtn.addEventListener('click', () => {
+    glossaryEl.value = '';
+    updateGlossaryCount();
+  });
+
+  function parseGlossary(text) {
+    return text.split('\n')
+      .map(l => l.trim())
+      .filter(l => l.includes('=') && !l.startsWith('#'))
+      .map(l => {
+        const idx = l.indexOf('=');
+        return {
+          from: l.slice(0, idx).trim(),
+          to: l.slice(idx + 1).trim()
+        };
+      })
+      .filter(pair => pair.from.length > 0);
+  }
+
+  function applyGlossary(text, glossaryPairs) {
+    let result = text;
+    for (const pair of glossaryPairs) {
+      if (!pair.from) continue;
+      result = result.split(pair.from).join(pair.to);
+    }
+    return result;
+  }
+
+  convertBtn.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) {
+      statusEl.textContent = '⚠️ 請先選擇 EPUB 檔案';
+      return;
+    }
+
+    convertBtn.disabled = true;
+    downloadArea.innerHTML = '';
+
+    try {
+      statusEl.textContent = '⏳ 正在讀取 EPUB...';
+      const arrayBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+
+      const modeCfg = modeMap[modeSelect.value];
+      const converter = OpenCC.Converter(modeCfg);
+      const glossaryPairs = parseGlossary(glossaryEl.value);
+
+      const targetExt = ['.html', '.xhtml', '.htm', '.ncx', '.opf', '.txt'];
+      const fileNames = Object.keys(zip.files);
+      let processed = 0;
+
+      statusEl.textContent = `⏳ 第一段:套用慣用詞感知轉換...`;
+
+      for (const name of fileNames) {
+        const entry = zip.files[name];
+        if (entry.dir) continue;
+
+        const lowerName = name.toLowerCase();
+        const isTarget = targetExt.some(ext => lowerName.endsWith(ext));
+
+        if (isTarget) {
+          let text = await entry.async('string');
+          text = converter(text);
+
+          if (glossaryPairs.length > 0) {
+            text = applyGlossary(text, glossaryPairs);
+          }
+
+          zip.file(name, text, {
+            compression: name === 'mimetype' ? 'STORE' : 'DEFLATE'
+          });
+          processed++;
+        }
+      }
+
+      statusEl.textContent = glossaryPairs.length > 0
+        ? `⏳ 第二段:已套用 ${glossaryPairs.length} 組自訂詞彙,正在打包...`
+        : `⏳ 正在打包 EPUB...`;
+
+      const outZip = new JSZip();
+      if (zip.files['mimetype']) {
+        const mimeContent = await zip.files['mimetype'].async('string');
+        outZip.file('mimetype', mimeContent, { compression: 'STORE' });
+      }
+      for (const name of fileNames) {
+        if (name === 'mimetype') continue;
+        const entry = zip.files[name];
+        if (entry.dir) {
+          outZip.folder(name);
+        } else {
+          const content = await entry.async('uint8array');
+          outZip.file(name, content, { compression: 'DEFLATE' });
+        }
+      }
+
+      const blob = await outZip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' });
+      const url = URL.createObjectURL(blob);
+
+      const originalName = file.name.replace(/\.epub$/i, '');
+      const newName = `${originalName}_繁中優化版.epub`;
+
+      downloadArea.innerHTML = `<a href="${url}" download="${newName}">⬇️ 下載轉換後的 EPUB</a>`;
+      statusEl.textContent = `✅ 轉換完成!處理了 ${processed} 個檔案,套用了 ${glossaryPairs.length} 組自訂詞彙。`;
+
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = '❌ 轉換失敗:' + err.message;
+    } finally {
+      convertBtn.disabled = false;
+    }
+  });
+
+  updateGlossaryCount();
+</script>
+
+</body>
+</html>
