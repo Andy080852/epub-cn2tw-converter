@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EPUB 簡轉繁工具</title>
+
+<!-- 社群分享預覽卡 (功能7) -->
+<meta property="og:title" content="EPUB 簡轉繁工具">
+<meta property="og:description" content="兩段式轉換,100% 本機處理不上傳檔案。支援台灣/香港用字與慣用語,可自訂詞彙表精準修正。">
+<meta property="og:type" content="website">
+<meta name="description" content="免費線上 EPUB 簡體轉繁體工具,支援台灣、香港用字與慣用語,100% 本機處理。">
+
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/full.js"></script>
 <style>
@@ -26,11 +33,7 @@
     max-width: 100%;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   }
-  h2 {
-    margin-top: 0;
-    color: #ffffff;
-    font-size: 20px;
-  }
+  h2 { margin-top: 0; color: #ffffff; font-size: 20px; }
   h3 {
     color: #9fc7ff;
     font-size: 14px;
@@ -55,16 +58,11 @@
     flex-shrink: 0;
   }
   .row { margin: 14px 0; }
-  label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 14px;
-    color: #b5b5b5;
-  }
+  label { display: block; margin-bottom: 6px; font-size: 14px; color: #b5b5b5; }
   .dropzone {
     border: 2px dashed #444;
     border-radius: 10px;
-    padding: 20px;
+    padding: 22px 16px;
     text-align: center;
     cursor: pointer;
     transition: 0.15s;
@@ -77,11 +75,23 @@
     background: rgba(79,140,255,0.08);
     color: #cfe0ff;
   }
-  .dropzone.has-file {
-    border-color: #3a6df0;
-    color: #cfe0ff;
-    border-style: solid;
+  .dropzone.has-file { border-color: #3a6df0; color: #cfe0ff; border-style: solid; }
+
+  /* 手機優化:更明顯的選檔按鈕 (功能5) */
+  .browse-btn {
+    display: inline-block;
+    margin-top: 10px;
+    background: linear-gradient(90deg,#4f8cff,#3a6df0);
+    color: #fff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    min-height: 44px;
   }
+
   select, button, textarea {
     width: 100%;
     padding: 10px;
@@ -102,30 +112,25 @@
     padding-right: 34px;
     cursor: pointer;
   }
-  textarea {
-    min-height: 140px;
-    resize: vertical;
-    line-height: 1.6;
-  }
+  textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
   button {
     background: linear-gradient(90deg,#4f8cff,#3a6df0);
     border: none;
     cursor: pointer;
     font-weight: bold;
     transition: 0.2s;
+    min-height: 44px;
   }
   button:hover { opacity: 0.9; }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-  }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   .btn-secondary {
     background: #3a3d42;
     font-weight: normal;
     font-size: 12px;
     padding: 8px;
+    flex: 1;
+    min-width: 100px;
   }
   #convertBtn { margin-top: 6px; }
   #status {
@@ -138,8 +143,7 @@
     gap: 8px;
   }
   .spinner {
-    width: 13px;
-    height: 13px;
+    width: 13px; height: 13px;
     border: 2px solid #3d4a3f;
     border-top-color: #8fd19e;
     border-radius: 50%;
@@ -148,6 +152,50 @@
     display: none;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 進度條 (功能4) */
+  .progress-wrap { margin-top: 10px; display: none; }
+  .progress-track {
+    width: 100%; height: 8px;
+    background: #1e1f22;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid #3d3f44;
+  }
+  .progress-bar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg,#4f8cff,#3a6df0);
+    transition: width 0.2s ease;
+  }
+  .progress-text { font-size: 12px; color: #999; margin-top: 4px; }
+
+  /* 錯誤訊息 (功能3) */
+  .error-box {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #3a2222;
+    border-left: 3px solid #e5484d;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #ffb3b3;
+    line-height: 1.6;
+  }
+
+  /* 轉換統計 (功能2) */
+  .stats-box {
+    display: none;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #223a2c;
+    border-left: 3px solid #3fb56f;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #b6e6c9;
+    line-height: 1.8;
+  }
+  .stats-box strong { color: #ffffff; }
+
   #downloadArea { margin-top: 14px; }
   #downloadArea a {
     display: inline-block;
@@ -159,26 +207,11 @@
     font-size: 14px;
     animation: fadeIn 0.35s ease;
   }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .hint {
-    font-size: 12px;
-    color: #888;
-    margin-top: 6px;
-    line-height: 1.5;
-  }
-  .glossary-format {
-    font-size: 12px;
-    color: #7aa5ff;
-    margin-bottom: 6px;
-  }
-  .counter {
-    font-size: 12px;
-    color: #888;
-    margin-top: 6px;
-  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .hint { font-size: 12px; color: #888; margin-top: 6px; line-height: 1.5; }
+  .glossary-format { font-size: 12px; color: #7aa5ff; margin-bottom: 6px; }
+  .counter { font-size: 12px; color: #888; margin-top: 6px; }
   .note-box {
     background: #33363c;
     border-left: 3px solid #f0b429;
@@ -189,12 +222,8 @@
     line-height: 1.6;
     margin: 10px 0 14px;
   }
-  footer {
-    margin-top: 24px;
-    text-align: center;
-    font-size: 11px;
-    color: #666;
-  }
+  .save-indicator { font-size: 11px; color: #6fbf8f; margin-top: 4px; height: 14px; }
+  footer { margin-top: 24px; text-align: center; font-size: 11px; color: #666; }
   footer a { color: #7aa5ff; text-decoration: none; }
 
   @media (max-width: 480px) {
@@ -211,10 +240,12 @@
   <h3><span class="step-badge">1</span>選擇檔案與基本模式</h3>
   <div class="row">
     <div class="dropzone" id="dropzone">
-      <div id="dropzoneText">點擊或拖曳 EPUB 檔案到這裡</div>
+      <div id="dropzoneText">拖曳 EPUB 檔案到這裡</div>
+      <button type="button" class="browse-btn" id="browseBtn">📁 點擊選擇檔案</button>
     </div>
     <input type="file" id="fileInput" accept=".epub" hidden>
   </div>
+  <div class="error-box" id="fileErrorBox"></div>
 
   <div class="row">
     <label>基本轉換模式</label>
@@ -230,16 +261,22 @@
 
   <h3><span class="step-badge">2</span>自訂詞彙對照表(補漏 / 精準修正)</h3>
   <div class="note-box">
-    💡 這欄位不是必填。建議先不填直接轉換,下載後檢查內容,有殘留簡體字或用語不順再回來補上,重新轉換一次即可。顯示「套用 0 組」是正常的,代表那些詞已經被基本模式處理掉了。
+    💡 這欄位不是必填。建議先不填直接轉換,下載後檢查內容,有殘留簡體字或用語不順再回來補上,重新轉換一次即可。詞彙表會自動儲存在本機瀏覽器,下次打開網頁會自動載回。
   </div>
   <div class="glossary-format">格式:每行一組,原詞=替換詞(填入你發現「殘留未轉」的詞)</div>
   <div class="row">
     <textarea id="glossary" spellcheck="false" placeholder="例如:&#10;视频=影片&#10;硬盘=硬碟"></textarea>
     <div class="counter" id="glossaryCount">0 組詞彙</div>
+    <div class="save-indicator" id="saveIndicator"></div>
   </div>
   <div class="btn-row">
     <button class="btn-secondary" id="loadPreset">載入範例詞彙</button>
     <button class="btn-secondary" id="clearGlossary">清空詞彙表</button>
+  </div>
+  <div class="btn-row">
+    <button class="btn-secondary" id="exportGlossary">⬇️ 匯出詞彙表</button>
+    <button class="btn-secondary" id="importGlossary">⬆️ 匯入詞彙表</button>
+    <input type="file" id="importGlossaryFile" accept=".txt" hidden>
   </div>
 
   <h3><span class="step-badge">3</span>開始轉換</h3>
@@ -249,17 +286,28 @@
     <span class="spinner" id="spinner"></span>
     <span id="statusText"></span>
   </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+
+  <div class="error-box" id="convertErrorBox"></div>
+
+  <div class="stats-box" id="statsBox"></div>
+
   <div id="downloadArea"></div>
 
-  <footer>EPUB CN2TW Converter · 100% 本機處理,不上傳檔案</footer>
+  <footer>本工具使用 OpenCC（Apache License 2.0）與 JSZip（MIT License）進行文字轉換。</footer>
 </div>
 
 <script>
   const fileInput = document.getElementById('fileInput');
   const dropzone = document.getElementById('dropzone');
   const dropzoneText = document.getElementById('dropzoneText');
+  const browseBtn = document.getElementById('browseBtn');
+  const fileErrorBox = document.getElementById('fileErrorBox');
   const convertBtn = document.getElementById('convertBtn');
-  const statusEl = document.getElementById('status');
   const statusTextEl = document.getElementById('statusText');
   const spinnerEl = document.getElementById('spinner');
   const downloadArea = document.getElementById('downloadArea');
@@ -269,6 +317,17 @@
   const glossaryCount = document.getElementById('glossaryCount');
   const loadPresetBtn = document.getElementById('loadPreset');
   const clearGlossaryBtn = document.getElementById('clearGlossary');
+  const exportGlossaryBtn = document.getElementById('exportGlossary');
+  const importGlossaryBtn = document.getElementById('importGlossary');
+  const importGlossaryFile = document.getElementById('importGlossaryFile');
+  const saveIndicator = document.getElementById('saveIndicator');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  const convertErrorBox = document.getElementById('convertErrorBox');
+  const statsBox = document.getElementById('statsBox');
+
+  const GLOSSARY_KEY = 'epub_cn2tw_glossary_v1';
 
   const modeMap = {
     'cn-twp': { from: 'cn', to: 'twp' },
@@ -290,6 +349,18 @@
     modeHint.textContent = modeHints[modeSelect.value] || '';
   });
 
+  // ---------- 錯誤提示工具 ----------
+  function showFileError(msg) {
+    if (!msg) { fileErrorBox.style.display = 'none'; fileErrorBox.textContent = ''; return; }
+    fileErrorBox.style.display = 'block';
+    fileErrorBox.textContent = msg;
+  }
+  function showConvertError(msg) {
+    if (!msg) { convertErrorBox.style.display = 'none'; convertErrorBox.textContent = ''; return; }
+    convertErrorBox.style.display = 'block';
+    convertErrorBox.textContent = msg;
+  }
+
   function formatSize(bytes) {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -299,25 +370,32 @@
     if (!file) return;
     dropzone.classList.add('has-file');
     dropzoneText.textContent = `📄 ${file.name} (${formatSize(file.size)})`;
+    downloadArea.innerHTML = '';
+    statsBox.style.display = 'none';
+    showConvertError('');
   }
 
+  // ---------- 選檔(功能5:手機專用按鈕 + 拖曳) ----------
+  browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
   dropzone.addEventListener('click', () => fileInput.click());
 
   fileInput.addEventListener('change', () => {
-    setSelectedFile(fileInput.files[0]);
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.epub')) {
+      showFileError('❌ 檔案格式錯誤:請選擇 .epub 檔案');
+      dropzone.classList.remove('has-file');
+      return;
+    }
+    showFileError('');
+    setSelectedFile(file);
   });
 
   ['dragenter', 'dragover'].forEach(evt => {
-    dropzone.addEventListener(evt, (e) => {
-      e.preventDefault();
-      dropzone.classList.add('dragover');
-    });
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
   });
-
   ['dragleave', 'dragend'].forEach(evt => {
-    dropzone.addEventListener(evt, () => {
-      dropzone.classList.remove('dragover');
-    });
+    dropzone.addEventListener(evt, () => dropzone.classList.remove('dragover'));
   });
 
   dropzone.addEventListener('drop', (e) => {
@@ -326,105 +404,37 @@
     const file = e.dataTransfer.files[0];
     if (file && file.name.toLowerCase().endsWith('.epub')) {
       fileInput.files = e.dataTransfer.files;
+      showFileError('');
       setSelectedFile(file);
     } else {
-      statusTextEl.textContent = '⚠️ 請拖曳 .epub 檔案';
+      showFileError('❌ 檔案格式錯誤:請拖曳 .epub 檔案');
     }
   });
 
+  // ---------- 預設詞彙庫 ----------
   const presetGlossary = [
     '# 科技 / 電腦',
-    '视频=影片',
-    '硬盘=硬碟',
-    '打印机=印表機',
-    '鼠标=滑鼠',
-    '软件=軟體',
-    '内存=記憶體',
-    '光标=游標',
-    '默认=預設',
-    '文件=檔案',
-    '信息=資訊',
-    '网络=網路',
-    '在线=線上',
-    '激活=啟用',
-    '数据=資料',
-    '服务器=伺服器',
-    '账户=帳戶',
-    '密码=密碼',
-    '界面=介面',
-    '显示器=顯示器',
-    '摄像头=攝影機',
-    '充电器=充電器',
-    '电池=電池',
-    '蓝牙=藍牙',
-    '搜索=搜尋',
-    '下载=下載',
-    '上传=上傳',
-    '',
+    '视频=影片','硬盘=硬碟','打印机=印表機','鼠标=滑鼠','软件=軟體','内存=記憶體',
+    '光标=游標','默认=預設','文件=檔案','信息=資訊','网络=網路','在线=線上',
+    '激活=啟用','数据=資料','服务器=伺服器','账户=帳戶','密码=密碼','界面=介面',
+    '显示器=顯示器','摄像头=攝影機','充电器=充電器','电池=電池','蓝牙=藍牙',
+    '搜索=搜尋','下载=下載','上传=上傳','',
     '# 飲食 / 生活',
-    '土豆=馬鈴薯',
-    '西红柿=番茄',
-    '花生米=花生',
-    '方便面=泡麵',
-    '矿泉水=礦泉水',
-    '快递=快遞',
-    '外卖=外送',
-    '打车=叫車',
-    '公交=公車',
-    '地铁=地鐵',
-    '出租车=計程車',
-    '洗手间=洗手間',
-    '拖鞋=拖鞋',
-    '毛巾=毛巾',
-    '',
+    '土豆=馬鈴薯','西红柿=番茄','花生米=花生','方便面=泡麵','矿泉水=礦泉水',
+    '快递=快遞','外卖=外送','打车=叫車','公交=公車','地铁=地鐵','出租车=計程車',
+    '洗手间=洗手間','拖鞋=拖鞋','毛巾=毛巾','',
     '# 網路用語 / 口語',
-    '忽悠=哄騙',
-    '奇葩=怪咖',
-    '牛逼=厲害',
-    '接地气=貼近生活',
-    '给力=給力(厲害)',
-    '窝心=貼心',
-    '搞定=辦妥',
-    '点赞=按讚',
-    '吐槽=抱怨',
-    '靠谱=可靠',
-    '怼=頂',
-    '社死=社會性死亡',
-    '躺平=躺平',
-    '内卷=內捲',
-    '摆烂=擺爛',
-    '',
+    '忽悠=哄騙','奇葩=怪咖','牛逼=厲害','接地气=貼近生活','给力=給力(厲害)',
+    '窝心=貼心','搞定=辦妥','点赞=按讚','吐槽=抱怨','靠谱=可靠','怼=頂',
+    '社死=社會性死亡','躺平=躺平','内卷=內捲','摆烂=擺爛','',
     '# 影視 / 娛樂',
-    '直播=直播',
-    '弹幕=彈幕',
-    '主播=主播',
-    '网红=網紅',
-    '粉丝=粉絲',
-    '偶像=偶像',
-    '综艺=綜藝',
-    '剪辑=剪輯',
-    '配音=配音',
-    '特效=特效',
-    '片头=片頭',
-    '片尾=片尾',
-    '剧本=劇本',
-    '导演=導演',
-    '',
+    '直播=直播','弹幕=彈幕','主播=主播','网红=網紅','粉丝=粉絲','偶像=偶像',
+    '综艺=綜藝','剪辑=剪輯','配音=配音','特效=特效','片头=片頭','片尾=片尾',
+    '剧本=劇本','导演=導演','',
     '# 職場 / 商業',
-    '经理=經理',
-    '方案=方案',
-    '反馈=回饋',
-    '沟通=溝通',
-    '协调=協調',
-    '汇报=匯報',
-    '绩效=績效',
-    '福利=福利',
-    '入职=到職',
-    '离职=離職',
-    '面试=面試',
-    '简历=履歷',
-    '薪水=薪水',
-    '奖金=獎金'
+    '经理=經理','方案=方案','反馈=回饋','沟通=溝通','协调=協調','汇报=匯報',
+    '绩效=績效','福利=福利','入职=到職','离职=離職','面试=面試','简历=履歷',
+    '薪水=薪水','奖金=獎金'
   ].join('\n');
 
   function updateGlossaryCount() {
@@ -432,16 +442,55 @@
     glossaryCount.textContent = `${lines.length} 組詞彙`;
   }
 
-  glossaryEl.addEventListener('input', updateGlossaryCount);
+  // ---------- localStorage 自動記憶 (功能1) ----------
+  function loadGlossaryFromStorage() {
+    const saved = localStorage.getItem(GLOSSARY_KEY);
+    if (saved !== null) glossaryEl.value = saved;
+  }
+  let saveTimer = null;
+  function saveGlossaryToStorage() {
+    localStorage.setItem(GLOSSARY_KEY, glossaryEl.value);
+    saveIndicator.textContent = '✓ 已自動儲存';
+    clearTimeout(saveTimer._hide);
+    saveTimer._hide = setTimeout(() => { saveIndicator.textContent = ''; }, 1500);
+  }
+  glossaryEl.addEventListener('input', () => {
+    updateGlossaryCount();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveGlossaryToStorage, 500);
+  });
 
   loadPresetBtn.addEventListener('click', () => {
     glossaryEl.value = presetGlossary;
     updateGlossaryCount();
+    saveGlossaryToStorage();
   });
-
   clearGlossaryBtn.addEventListener('click', () => {
     glossaryEl.value = '';
     updateGlossaryCount();
+    saveGlossaryToStorage();
+  });
+
+  // ---------- 匯出 / 匯入詞彙表 (功能6折衷方案) ----------
+  exportGlossaryBtn.addEventListener('click', () => {
+    const blob = new Blob([glossaryEl.value], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'glossary.txt'; a.click();
+    URL.revokeObjectURL(url);
+  });
+  importGlossaryBtn.addEventListener('click', () => importGlossaryFile.click());
+  importGlossaryFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      glossaryEl.value = ev.target.result;
+      updateGlossaryCount();
+      saveGlossaryToStorage();
+    };
+    reader.onerror = () => showFileError('❌ 讀取詞彙表檔案失敗,請確認為純文字 .txt 檔');
+    reader.readAsText(file, 'utf-8');
   });
 
   function parseGlossary(text) {
@@ -450,21 +499,32 @@
       .filter(l => l.includes('=') && !l.startsWith('#'))
       .map(l => {
         const idx = l.indexOf('=');
-        return {
-          from: l.slice(0, idx).trim(),
-          to: l.slice(idx + 1).trim()
-        };
+        return { from: l.slice(0, idx).trim(), to: l.slice(idx + 1).trim() };
       })
       .filter(pair => pair.from.length > 0);
   }
 
+  // 套用詞彙表,並回傳實際替換「次數」(功能2統計用)
   function applyGlossary(text, glossaryPairs) {
     let result = text;
+    let appliedCount = 0;
     for (const pair of glossaryPairs) {
       if (!pair.from) continue;
-      result = result.split(pair.from).join(pair.to);
+      const parts = result.split(pair.from);
+      if (parts.length > 1) {
+        appliedCount += parts.length - 1;
+        result = parts.join(pair.to);
+      }
     }
-    return result;
+    return { result, appliedCount };
+  }
+
+  // 簡易字符差異估算(功能2統計用)
+  function countCharDiff(a, b) {
+    let diff = Math.abs(a.length - b.length);
+    const minLen = Math.min(a.length, b.length);
+    for (let i = 0; i < minLen; i++) if (a[i] !== b[i]) diff++;
+    return diff;
   }
 
   function setStatus(text, loading) {
@@ -472,20 +532,34 @@
     spinnerEl.style.display = loading ? 'inline-block' : 'none';
   }
 
+  // ---------- 主轉換流程 ----------
   convertBtn.addEventListener('click', async () => {
     const file = fileInput.files[0];
-    if (!file) {
-      setStatus('⚠️ 請先選擇 EPUB 檔案', false);
+    showConvertError('');
+    statsBox.style.display = 'none';
+
+    if (!file) { setStatus('⚠️ 請先選擇 EPUB 檔案', false); return; }
+    if (!file.name.toLowerCase().endsWith('.epub')) {
+      showConvertError('❌ 檔案格式錯誤:請選擇 .epub 檔案');
       return;
     }
 
     convertBtn.disabled = true;
     downloadArea.innerHTML = '';
+    progressWrap.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = '';
 
     try {
       setStatus('正在讀取 EPUB...', true);
-      const arrayBuffer = await file.arrayBuffer();
-      const zip = await JSZip.loadAsync(arrayBuffer);
+
+      let arrayBuffer, zip;
+      try {
+        arrayBuffer = await file.arrayBuffer();
+        zip = await JSZip.loadAsync(arrayBuffer);
+      } catch (e) {
+        throw new Error('CORRUPT_FILE');
+      }
 
       const modeCfg = modeMap[modeSelect.value];
       const converter = OpenCC.Converter(modeCfg);
@@ -493,31 +567,46 @@
 
       const targetExt = ['.html', '.xhtml', '.htm', '.ncx', '.opf', '.txt'];
       const fileNames = Object.keys(zip.files);
-      let processed = 0;
-
-      setStatus('第一段:套用慣用詞轉換...', true);
-
-      for (const name of fileNames) {
+      const targetFiles = fileNames.filter(name => {
         const entry = zip.files[name];
-        if (entry.dir) continue;
+        return !entry.dir && targetExt.some(ext => name.toLowerCase().endsWith(ext));
+      });
 
-        const lowerName = name.toLowerCase();
-        const isTarget = targetExt.some(ext => lowerName.endsWith(ext));
-
-        if (isTarget) {
-          let text = await entry.async('string');
-          text = converter(text);
-
-          if (glossaryPairs.length > 0) {
-            text = applyGlossary(text, glossaryPairs);
-          }
-
-          zip.file(name, text, {
-            compression: name === 'mimetype' ? 'STORE' : 'DEFLATE'
-          });
-          processed++;
-        }
+      if (targetFiles.length === 0) {
+        throw new Error('NO_CONTENT');
       }
+
+      let processed = 0;
+      let totalGlossaryApplied = 0;
+      let totalCharDiff = 0;
+
+      for (let i = 0; i < targetFiles.length; i++) {
+        const name = targetFiles[i];
+        progressText.textContent = `處理中:第 ${i + 1} / ${targetFiles.length} 個檔案`;
+        progressBar.style.width = Math.round((i / targetFiles.length) * 100) + '%';
+        setStatus('第一段:套用慣用詞轉換...', true);
+
+        const entry = zip.files[name];
+        const originalText = await entry.async('string');
+        let text = converter(originalText);
+
+        if (glossaryPairs.length > 0) {
+          const { result, appliedCount } = applyGlossary(text, glossaryPairs);
+          text = result;
+          totalGlossaryApplied += appliedCount;
+        }
+
+        totalCharDiff += countCharDiff(originalText, text);
+
+        zip.file(name, text, { compression: name === 'mimetype' ? 'STORE' : 'DEFLATE' });
+        processed++;
+
+        // 讓瀏覽器有機會重繪進度條,避免大檔案卡住無回應的錯覺
+        await new Promise(r => setTimeout(r, 0));
+      }
+
+      progressBar.style.width = '100%';
+      progressText.textContent = `完成:共處理 ${processed} 個檔案`;
 
       setStatus(
         glossaryPairs.length > 0
@@ -534,9 +623,8 @@
       for (const name of fileNames) {
         if (name === 'mimetype') continue;
         const entry = zip.files[name];
-        if (entry.dir) {
-          outZip.folder(name);
-        } else {
+        if (entry.dir) { outZip.folder(name); }
+        else {
           const content = await entry.async('uint8array');
           outZip.file(name, content, { compression: 'DEFLATE' });
         }
@@ -549,16 +637,35 @@
       const newName = `${originalName}_繁中版.epub`;
 
       downloadArea.innerHTML = `<a href="${url}" download="${newName}">⬇️ 下載轉換後的 EPUB</a>`;
-      setStatus(`✅ 轉換完成!處理了 ${processed} 個檔案,套用了 ${glossaryPairs.length} 組自訂詞彙。`, false);
+      setStatus(`✅ 轉換完成!`, false);
+
+      // ---------- 轉換統計 (功能2) ----------
+      statsBox.style.display = 'block';
+      statsBox.innerHTML = `
+        📊 <strong>轉換統計</strong><br>
+        處理檔案數:<strong>${processed}</strong><br>
+        自訂詞彙表:定義 <strong>${glossaryPairs.length}</strong> 組,實際套用 <strong>${totalGlossaryApplied}</strong> 次<br>
+        字符差異(含慣用詞+自訂詞彙):約 <strong>${totalCharDiff}</strong> 處
+      `;
 
     } catch (err) {
       console.error(err);
-      setStatus('❌ 轉換失敗:' + err.message, false);
+      progressWrap.style.display = 'none';
+      setStatus('', false);
+      if (err.message === 'CORRUPT_FILE') {
+        showConvertError('❌ 檔案損毀或非有效 EPUB 格式,請確認檔案完整性後重新上傳');
+      } else if (err.message === 'NO_CONTENT') {
+        showConvertError('❌ 找不到可轉換的內容,請確認這是有效的 EPUB 電子書檔案');
+      } else {
+        showConvertError('❌ 轉換失敗:' + err.message);
+      }
     } finally {
       convertBtn.disabled = false;
     }
   });
 
+  // ---------- 初始化 ----------
+  loadGlossaryFromStorage();
   updateGlossaryCount();
 </script>
 
