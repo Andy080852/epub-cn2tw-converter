@@ -388,7 +388,7 @@
       const url = URL.createObjectURL(blob);
 
       const originalName = file.name.replace(/\.epub$/i, '');
-      const newName = `${originalName}_繁中優化版.epub`;
+      const newName = `${originalName}_繁中版.epub`;
 
       downloadArea.innerHTML = `<a href="${url}" download="${newName}">⬇️ 下載轉換後的 EPUB</a>`;
       statusEl.textContent = `✅ 轉換完成!處理了 ${processed} 個檔案,套用了 ${glossaryPairs.length} 組自訂詞彙。`;
