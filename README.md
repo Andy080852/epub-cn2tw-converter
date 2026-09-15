@@ -1,13 +1,20 @@
-# epub-cn2tw-converter
-Convert Simplified Chinese EPUB e-books to Traditional Chinese with smart glossary correction for tech, lifestyle, and internet slang terms. 
+# EPUB 簡轉繁工具
 
-簡體中文 EPUB 電子書轉繁體中文工具,內建常見詞彙修正功能,支援台灣/香港用字模式。
+一個純前端的 EPUB 簡體轉繁體工具,支援台灣/香港用字與慣用詞轉換,
+所有處理都在瀏覽器本機完成,不會上傳任何檔案。
+
+## 功能
+- 支援台灣用字+慣用詞 / 香港用字+慣用詞等多種模式
+- 自訂詞彙表,可針對特定用語二次修正
+- 拖曳上傳,操作簡單
+
+## 線上使用
+👉 https://andy080852.github.io/epub-cn2tw-converter/
 
 ## 授權與致謝
-
 本專案使用以下開源套件:
 - [OpenCC](https://github.com/BYVoid/OpenCC) — Apache License 2.0
 - [opencc-js](https://github.com/nk2028/opencc-js) — Apache License 2.0
-- [JSZip](https://github.com/Stuxnet/jszip) — MIT / GPLv3 雙授權
+- [JSZip](https://github.com/Stuxnet/jszip) — MIT License
 
-本專案原始碼採用 MIT License 發布。
+本專案原始碼採用 [MIT License](LICENSE) 發布。
